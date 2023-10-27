@@ -16,22 +16,22 @@ include:
     file:
       - terraform-template.yaml
 
-validate_terraform:
+validate_infra:
   stage: validate
   tags:
     - docker
 
-plan_eks_cluster:
+plan_infra:
   stage: plan
   tags:
     - docker
 
-apply_eks_cluster:
+apply_infra:
   stage: apply
   tags:
     - docker
 
-destroy_eks_cluster:
+destroy_infra:
   stage: destroy
   tags:
     - docker
