@@ -16,6 +16,10 @@ include:
     file:
       - terraform-template.yaml
 
+.common:
+  tags:
+    - docker
+
 validate_infra:
   stage: validate
   tags:
