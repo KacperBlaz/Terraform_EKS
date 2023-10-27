@@ -11,7 +11,7 @@ variables:
   BACKEND_CONFIG: backend.tfvars
 
 include:
-  - project: 'aws_project/aws_project'
+  - project: 'aws_project1/aws_project'
     ref: main
     file:
       - terraform-template.yaml
