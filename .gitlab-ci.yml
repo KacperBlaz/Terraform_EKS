@@ -1,0 +1,37 @@
+stages:
+  - validate
+  - plan
+  - apply
+  - destroy
+
+variables:
+  IMAGE_TAG: 1.0.${CI_PIPELINE_IID}
+  TF_VAR_ENV_NAME: testing
+  TF_ROOT: ${CI_PROJECT_DIR}
+  BACKEND_CONFIG: backend.tfvars
+
+include:
+  - project: 'aws_project/aws_project'
+    ref: main
+    file:
+      - terraform-template.yaml
+
+validate_terraform:
+  stage: validate
+  tags:
+    - docker
+
+plan_eks_cluster:
+  stage: plan
+  tags:
+    - docker
+
+apply_eks_cluster:
+  stage: apply
+  tags:
+    - docker
+
+destroy_eks_cluster:
+  stage: destroy
+  tags:
+    - docker
