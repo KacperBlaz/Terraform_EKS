@@ -1,4 +1,4 @@
-resource "aws_eip" "nat" {
+resource "aws_eip" "this" {
   vpc = true
 
   tags = {
@@ -6,11 +6,13 @@ resource "aws_eip" "nat" {
   }
 }
 
-resource "aws_nat_gateway" "access_public" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = "subnet-0d5d03d27000de371"
+resource "aws_nat_gateway" "this" {
+  allocation_id = aws_eip.this.id
+  depends_on = [aws_internet_gateway.this, aws_subnet.public_subnet]
+  subnet_id     = values(aws_subnet.public_subnet)[0].id
 
   tags = {
     Name = var.tags["NAT_GW_Name"]
   }
+
 }

@@ -2,6 +2,8 @@ variable "vpc_cidr_block" {
   type = string
 }
 
+variable "cluster_name" {}
+
 variable "public_subnets_cidr_blocks" {}
 
 variable "private_subnets_cidr_blocks" {}

@@ -1,8 +1,8 @@
-resource "aws_internet_gateway" "vpc_eks_igw" {
-  vpc_id = aws_vpc.vpc.id
+resource "aws_internet_gateway" "this" {
+  vpc_id = aws_vpc.this.id
 
   tags = {
-    Environment = "${terraform.workspace}"
+    Environment = terraform.workspace
     Name        = var.tags["IGW_Name"]
   }
 }

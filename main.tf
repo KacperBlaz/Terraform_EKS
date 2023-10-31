@@ -1,81 +1,66 @@
-terraform {
-  backend "s3" {}
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.27"
-    }
-    kubernetes = {
-      source = "hashicorp/kubernetes"
-      version = "2.21.1"
-    }
-    tls = {
-      source = "hashicorp/tls"
-      version = "4.0.4"
-    }
-  }
-  required_version = ">=1.2.0"
+locals {
+  cluster_name = "EKS-cluster-${terraform.workspace}"
 }
-
-provider "aws" {
-  region = var.aws_region
-}
-
-output "cluster_name" {
-  value = module.networking.eks_cluster_name
-}
-
-output "eks_role_arn" {
-  value = module.iam.eks_role_arn
-}
-
-output "private_subnet_ids" {
-  value = module.networking.private_subnet_ids
-}
-
-output "public_subnet_ids" {
-  value = module.networking.public_subnet_ids
-}
-
-output "eks_endpoint" {
-  value = module.eks.eks_endpoint
-}
-
-output "kubeconfig_cert_authority_data" {
-  value = module.eks.kubeconfig_cert_authority_data
-}
-
-output "eks_node_group_role_arn" {
-  value = module.iam.eks_node_group_role_arn
-}
-
 
 module "iam" {
-  source        = "./modules/iam"
-  eks_role_name = var.eks_role_name
+  source                   = "./modules/iam"
+  eks_role_name            = var.eks_role_name
   eks_node_group_role_name = var.eks_node_group_role_name
+  eks_aws_console_access = var.eks_aws_console_access
 }
 
 module "networking" {
-  source                    = "./modules/networking"
-  vpc_cidr_block            = var.vpc_cidr_block
+  source                      = "./modules/networking"
+  vpc_cidr_block              = var.vpc_cidr_block
   public_subnets_cidr_blocks  = var.public_subnets_cidr_blocks
   private_subnets_cidr_blocks = var.private_subnets_cidr_blocks
+  cluster_name                = local.cluster_name
 }
 
 module "eks" {
-  source           = "./modules/eks"
-  depends_on       = [module.iam, module.networking]
-  eks_role_arn     = module.iam.eks_role_arn
-  public_subnet_ids = module.networking.public_subnet_ids
-  private_subnet_ids      = module.networking.private_subnet_ids
-  node_role_arn = module.iam.eks_node_group_role_arn
-  eks_cluster_name = module.networking.eks_cluster_name
-  capacity_type = var.capacity_type
-  instance_types = var.instance_types
-  min_size = var.min_size
-  desired_size = var.desired_size
-  max_size = var.max_size
-  max_unavailable = var.max_unavailable
+  source             = "./modules/eks"
+  depends_on         = [module.iam, module.networking]
+  eks_role_arn       = module.iam.eks_role_arn
+  node_role_arn      = module.iam.eks_node_group_role_arn
+  public_subnet_ids  = module.networking.public_subnet_ids
+  private_subnet_ids = module.networking.private_subnet_ids
+  eks_cluster_name   = local.cluster_name
+  capacity_type      = var.capacity_type
+  instance_types     = var.instance_types
+  min_size           = var.min_size
+  desired_size       = var.desired_size
+  max_size           = var.max_size
+  max_unavailable    = var.max_unavailable
+}
+
+resource "null_resource" "load_eks_kubeconfig" {
+  depends_on = [module.eks]
+  provisioner "local-exec" {
+    command = "aws eks --region ${var.aws_region} update-kubeconfig --name ${local.cluster_name}"
+  }
+}
+
+resource "kubernetes_config_map" "aws_auth_configmap" {
+  metadata {
+    name = "aws-auth"
+    namespace = "kube-system"
+  }
+  data = {
+        mapRoles = yamlencode(
+          [
+    {
+        "groups": [
+            "system:bootstrappers",
+            "system:nodes"
+        ],
+        "rolearn": "arn:aws:iam::410040632229:role/EKS-Node-Group-Role-default",
+        "username": "system:node:{{EC2PrivateDNSName}}"
+    }
+])
+        mapUsers = <<YAML
+- userarn: arn:aws:iam::410040632229:root
+  groups:
+  - system:masters
+YAML
+  }
 }

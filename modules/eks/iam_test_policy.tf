@@ -30,7 +30,7 @@ resource "aws_iam_policy" "test_oidc_policy" {
           "s3:GetBucketLocation"
         ]
         Effect   = "Allow"
-        Resource = "arns:aws:s3:::*"
+        Resource = "arn:aws:s3:::*"
       }]
       Version = "2012-10-17"
   })
