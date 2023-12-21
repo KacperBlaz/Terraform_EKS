@@ -1,0 +1,46 @@
+stages:
+  - validate
+  - plan
+  - apply
+  - destroy
+
+variables:
+  IMAGE_TAG: 1.0.${CI_PIPELINE_IID}
+  TF_VAR_ENV_NAME: testing
+  TF_ROOT: ${CI_PROJECT_DIR}
+  BACKEND_CONFIG: backend.tfvars
+
+include:
+  - project: 'aws_project1/ci-templates'
+    ref: main
+    file:
+      - terraform-template.yaml
+
+.common:
+  tags:
+    - terraform
+    - oidc
+
+validate_infra:
+  stage: validate
+  tags:
+    - terraform
+    - oidc
+
+plan_infra:
+  stage: plan
+  tags:
+    - terraform
+    - oidc
+
+apply_infra:
+  stage: apply
+  tags:
+    - terraform
+    - oidc
+
+destroy_infra:
+  stage: destroy
+  tags:
+    - terraform
+    - oidc
